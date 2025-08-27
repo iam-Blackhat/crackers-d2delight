@@ -19,7 +19,7 @@ func CreateProduct(c *gin.Context) {
 	}
 
 	if err := initializers.DB.Create(&input).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create product"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 

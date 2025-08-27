@@ -39,7 +39,7 @@ func CreateOrder(c *gin.Context) {
 	}
 
 	if err := initializers.DB.Create(&order).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create order"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 
