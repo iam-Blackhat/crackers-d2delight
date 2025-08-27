@@ -1,0 +1,5 @@
+ALTER TABLE customer_profiles
+ADD COLUMN email VARCHAR(255),
+ADD COLUMN phone VARCHAR(15),
+DROP COLUMN addresses,
+ADD COLUMN address TEXT;

@@ -13,7 +13,7 @@ type Product struct {
 	Description string         `gorm:"type:text" json:"description"`
 	Price       float64        `gorm:"not null" json:"price"`
 	Stock       int            `gorm:"not null" json:"stock"`
-	Category    string         `gorm:"type:varchar(100)" json:"category"`
+	CategoryID  uint           `json:"category_id"` // Foreign key
 	ImageURL    string         `gorm:"type:text" json:"image_url"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
