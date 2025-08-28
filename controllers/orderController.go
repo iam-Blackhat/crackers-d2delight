@@ -13,6 +13,7 @@ import (
 func CreateOrder(c *gin.Context) {
 	var input struct {
 		CustomerID uint `json:"customer_id"`
+		AddressID  uint `json:"address_id"` // delivery address reference
 		Products   []struct {
 			ProductID uint    `json:"product_id"`
 			Quantity  int     `json:"quantity"`
@@ -33,13 +34,14 @@ func CreateOrder(c *gin.Context) {
 
 	// Create order
 	order := models.Order{
-		CustomerID: input.CustomerID,
-		Total:      total,
-		Status:     "pending",
+		CustomerID:           input.CustomerID,
+		DeliveryAddressIndex: input.AddressID, // save delivery address
+		Total:                total,
+		Status:               "pending",
 	}
 
 	if err := initializers.DB.Create(&order).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -60,7 +62,12 @@ func CreateOrder(c *gin.Context) {
 // Get All Orders
 func GetOrders(c *gin.Context) {
 	var orders []models.Order
-	initializers.DB.Preload("Customer").Preload("Products").Find(&orders)
+	initializers.DB.
+		Preload("Customer").
+		Preload("Products").
+		Preload("Address"). // preload delivery address
+		Find(&orders)
+
 	c.JSON(http.StatusOK, orders)
 }
 
@@ -69,7 +76,10 @@ func GetOrderByID(c *gin.Context) {
 	id := c.Param("id")
 	var order models.Order
 
-	if err := initializers.DB.Preload("Customer").Preload("Products").
+	if err := initializers.DB.
+		Preload("Customer").
+		Preload("Products").
+		Preload("Address"). // preload delivery address
 		First(&order, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Order not found"})
 		return
@@ -89,7 +99,8 @@ func UpdateOrder(c *gin.Context) {
 	}
 
 	var input struct {
-		Status string `json:"status"`
+		Status    string `json:"status"`
+		AddressID uint   `json:"address_id"` // allow updating delivery address
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -98,6 +109,10 @@ func UpdateOrder(c *gin.Context) {
 	}
 
 	order.Status = input.Status
+	if input.AddressID != 0 {
+		order.DeliveryAddressIndex = input.AddressID
+	}
+
 	initializers.DB.Save(&order)
 
 	c.JSON(http.StatusOK, order)
