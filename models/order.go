@@ -9,7 +9,7 @@ import (
 type Order struct {
 	ID                   uint           `gorm:"primaryKey" json:"id"`
 	CustomerID           uint           `gorm:"not null" json:"customer_id"`
-	DeliveryAddressIndex int            `gorm:"not null" json:"delivery_address_index"` // Index of the address in JSON array
+	DeliveryAddressIndex uint           `gorm:"not null" json:"delivery_address_index"` // Index of the address in JSON array
 	Total                float64        `gorm:"not null" json:"total"`
 	Status               string         `gorm:"type:varchar(50);default:'pending'" json:"status"`
 	CreatedAt            time.Time      `json:"created_at"`

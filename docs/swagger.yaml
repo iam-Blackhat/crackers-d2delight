@@ -1,0 +1,70 @@
+basePath: /api
+definitions:
+  models.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      phone:
+        description: New column
+        type: string
+      role_id:
+        description: FK to roles table
+        type: string
+      updated_at:
+        type: string
+    type: object
+host: localhost:8000
+info:
+  contact:
+    email: support@example.com
+    name: API Support
+    url: http://www.example.com/support
+  description: This is my application API documentation
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://example.com/terms/
+  title: My API
+  version: "1.0"
+paths:
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user with the provided input
+      parameters:
+      - description: User Data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new user
+      tags:
+      - users
+swagger: "2.0"

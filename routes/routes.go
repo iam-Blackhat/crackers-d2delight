@@ -4,10 +4,19 @@ import (
 	"crackers/d2delight.com/controllers"
 	"crackers/d2delight.com/middleware"
 
+	_ "crackers/d2delight.com/docs" // swagger docs
+
+	swaggerFiles "github.com/swaggo/files" // swagger embed files
+	ginSwagger "github.com/swaggo/gin-swagger"
+
 	"github.com/gin-gonic/gin"
 )
 
 func RegisterRoutes(r *gin.Engine) {
+
+	// Swagger route
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	// Health check (keep outside /api for simplicity)
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})

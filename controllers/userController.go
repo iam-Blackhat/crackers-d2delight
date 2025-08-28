@@ -26,7 +26,17 @@ type UpdateInput struct {
 	Password string `json:"password" binding:"required,min=6"`
 }
 
-// Create a new user
+// CreateUser godoc
+// @Summary Create a new user
+// @Description Create a new user with the provided input
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param user body models.User true "User Data"
+// @Success 201 {object} models.User
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /auth/register [post]
 func Create(c *gin.Context) {
 	var input Input
 	if err := c.ShouldBindJSON(&input); err != nil {
