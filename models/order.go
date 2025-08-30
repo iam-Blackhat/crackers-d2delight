@@ -1,25 +1,23 @@
 package models
 
-import (
-	"time"
-
-	"gorm.io/gorm"
-)
-
 type Order struct {
-	ID                uint           `gorm:"primaryKey" json:"id"`
-	CustomerID        uint           `gorm:"not null" json:"customer_id"`
-	DeliveryAddressId uint           `gorm:"not null" json:"delivery_address_id"` // Index of the address in JSON array
-	Total             float64        `gorm:"not null" json:"total"`
-	Status            string         `gorm:"type:varchar(50);default:'pending'" json:"status"`
-	CreatedAt         time.Time      `json:"created_at"`
-	UpdatedAt         time.Time      `json:"updated_at"`
-	DeletedAt         gorm.DeletedAt `gorm:"index" json:"-"`
+	ID                uint    `gorm:"primaryKey" json:"id"`
+	CustomerID        uint    `json:"customer_id"`
+	DeliveryAddressId uint    `json:"delivery_address_id"`
+	Total             float64 `json:"total"`
+	Status            string  `json:"status"`
+
+	// Relationships
+	Customer   User        `gorm:"foreignKey:CustomerID" json:"customer"`
+	OrderItems []OrderItem `json:"order_items"`
 }
 
 type OrderItem struct {
-	OrderID   uint    `gorm:"primaryKey"`
-	ProductID uint    `gorm:"primaryKey"`
-	Quantity  int     `gorm:"not null"`
-	Price     float64 `gorm:"not null"`
+	ID        uint    `gorm:"primaryKey" json:"id"`
+	OrderID   uint    `json:"order_id"`
+	ProductID uint    `json:"product_id"`
+	Quantity  int     `json:"quantity"`
+	Price     float64 `json:"price"`
+
+	Product Product `gorm:"foreignKey:ProductID" json:"product"`
 }

@@ -1,6 +1,6 @@
 CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
-    customer_id INT NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+    customer_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     delivery_address_id INT NOT NULL,
     total NUMERIC(10, 2) NOT NULL,
     status VARCHAR(50) DEFAULT 'pending',

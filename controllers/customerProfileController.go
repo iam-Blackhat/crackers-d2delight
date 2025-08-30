@@ -29,7 +29,7 @@ func CreateCustomerProfile(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch role"})
 		return
 	}
-	if role.Name != "customer" {
+	if role.Name != "CUSTOMER" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "only customers can create addresses"})
 		return
 	}
