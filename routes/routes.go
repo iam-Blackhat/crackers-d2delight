@@ -35,60 +35,60 @@ func RegisterRoutes(r *gin.Engine) {
 		// User routes (protected)
 		users := api.Group("/users", middleware.AuthRequired())
 		{
-			users.GET("/", controllers.GetUsers)
-			users.GET("/:id", controllers.GetUserByID)
-			users.PUT("/:id", controllers.Update)
-			users.DELETE("/:id", controllers.Delete)
+			users.GET("/", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.GetUsers)
+			users.GET("/:id", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.GetUserByID)
+			users.PUT("/:id", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.Update)
+			users.DELETE("/:id", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.Delete)
 		}
 
 		// Customer Profile Routes
-		customerProfiles := api.Group("/customer-profiles")
+		customerProfiles := api.Group("/CUSTOMER-profiles")
 		{
-			customerProfiles.POST("/", controllers.CreateCustomerProfile)
-			customerProfiles.GET("/", middleware.AuthRequired(), controllers.GetCustomerProfiles)
-			customerProfiles.GET("/:id", middleware.AuthRequired(), controllers.GetCustomerProfileByID)
-			customerProfiles.PUT("/:id", controllers.UpdateCustomerProfile)
-			customerProfiles.DELETE("/:id", middleware.AuthRequired(), controllers.DeleteCustomerProfile)
+			customerProfiles.POST("/", middleware.AuthRequired(), middleware.RoleRequired("CUSTOMER"), controllers.CreateCustomerProfile)
+			customerProfiles.GET("/", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.GetCustomerProfiles)
+			customerProfiles.GET("/:id", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.GetCustomerProfileByID)
+			customerProfiles.PUT("/:id", middleware.AuthRequired(), middleware.RoleRequired("CUSTOMER"), controllers.UpdateCustomerProfile)
+			customerProfiles.DELETE("/:id", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.DeleteCustomerProfile)
 		}
 
 		// Category Routes
 		categories := api.Group("/categories", middleware.AuthRequired())
 		{
-			categories.POST("/", controllers.CreateCategory)
-			categories.GET("/", controllers.GetCategories)
-			categories.GET("/:id", controllers.GetCategory)
-			categories.PUT("/:id", controllers.UpdateCategory)
-			categories.DELETE("/:id", controllers.DeleteCategory)
+			categories.POST("/", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.CreateCategory)
+			categories.GET("/", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.GetCategories)
+			categories.GET("/:id", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.GetCategory)
+			categories.PUT("/:id", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.UpdateCategory)
+			categories.DELETE("/:id", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.DeleteCategory)
 		}
 
 		// Product Routes
 		products := api.Group("/products")
 		{
-			products.GET("/", controllers.GetProducts)
-			products.GET("/:id", controllers.GetProductByID)
-			products.POST("/", controllers.CreateProduct)
-			products.PUT("/:id", controllers.UpdateProduct)
-			products.DELETE("/:id", controllers.DeleteProduct)
+			products.GET("/", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.GetProducts)
+			products.GET("/:id", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.GetProductByID)
+			products.POST("/", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.CreateProduct)
+			products.PUT("/:id", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.UpdateProduct)
+			products.DELETE("/:id", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.DeleteProduct)
 		}
 
 		// Order Routes
 		orders := api.Group("/orders")
 		{
-			orders.POST("/", controllers.CreateOrder)
-			orders.GET("/", middleware.AuthRequired(), controllers.GetOrders)
-			orders.GET("/:id", middleware.AuthRequired(), controllers.GetOrderByID)
-			orders.PUT("/:id", controllers.UpdateOrder)
-			orders.DELETE("/:id", middleware.AuthRequired(), controllers.DeleteOrder)
+			orders.POST("/", middleware.AuthRequired(), middleware.RoleRequired("CUSTOMER"), controllers.CreateOrder)
+			orders.GET("/", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), middleware.AuthRequired(), controllers.GetOrders)
+			orders.GET("/:id", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), middleware.AuthRequired(), controllers.GetOrderByID)
+			orders.PUT("/:id", middleware.AuthRequired(), middleware.RoleRequired("CUSTOMER"), controllers.UpdateOrder)
+			orders.DELETE("/:id", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), middleware.AuthRequired(), controllers.DeleteOrder)
 		}
 
 		// Role Routes
 		roles := api.Group("/roles", middleware.AuthRequired())
 		{
-			roles.POST("/", controllers.CreateRole)
-			roles.GET("/", controllers.GetRoles)
-			roles.GET("/:id", controllers.GetRoleByID)
-			roles.PUT("/:id", controllers.UpdateRole)
-			roles.DELETE("/:id", controllers.DeleteRole)
+			roles.POST("/", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.CreateRole)
+			roles.GET("/", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.GetRoles)
+			roles.GET("/:id", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.GetRoleByID)
+			roles.PUT("/:id", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.UpdateRole)
+			roles.DELETE("/:id", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.DeleteRole)
 		}
 	}
 }

@@ -51,10 +51,10 @@ func Create(c *gin.Context) {
 		return
 	}
 
-	// If RoleID is empty, assign default "customer" role
+	// If RoleID is empty, assign default "CUSTOMER" role
 	if input.RoleID == uuid.Nil {
 		var customerRole models.Role
-		if err := initializers.DB.Where("name = ?", "customer").First(&customerRole).Error; err != nil {
+		if err := initializers.DB.Where("name = ?", "CUSTOMER").First(&customerRole).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Default customer role not found"})
 			return
 		}

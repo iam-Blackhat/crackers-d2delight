@@ -5,11 +5,17 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"crackers/d2delight.com/initializers"
 	"crackers/d2delight.com/models"
 	"crackers/d2delight.com/utils"
 )
+
+type Role struct {
+	ID   uuid.UUID `db:"id" json:"id"`
+	Name string    `db:"name" json:"name"`
+}
 
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -40,9 +46,44 @@ func AuthRequired() gin.HandlerFunc {
 			return
 		}
 
+		var role Role
+		if err := initializers.DB.First(&role, user.RoleID).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch role"})
+			return
+		}
+
 		// attach user to context
 		c.Set("currentUser", user)
 		c.Next()
+	}
+}
+
+func RoleRequired(allowedRoles ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		u, exists := c.Get("currentUser")
+		if !exists {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user not found in context"})
+			return
+		}
+
+		user := u.(models.User)
+
+		// Fetch role using RoleID
+		var role models.Role
+		if err := initializers.DB.First(&role, user.RoleID).Error; err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch role"})
+			return
+		}
+
+		// Check if role matches allowed roles
+		for _, allowedRole := range allowedRoles {
+			if role.Name == allowedRole {
+				c.Next()
+				return
+			}
+		}
+
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "access denied"})
 	}
 }
 

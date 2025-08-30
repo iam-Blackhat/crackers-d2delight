@@ -1,13 +1,18 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
 
 	"crackers/d2delight.com/initializers"
 	"crackers/d2delight.com/models"
 
+	"gorm.io/gorm"
+
 	"github.com/gin-gonic/gin"
 )
+
+var user models.User
 
 // Create Order
 func CreateOrder(c *gin.Context) {
@@ -32,12 +37,22 @@ func CreateOrder(c *gin.Context) {
 		total += float64(p.Quantity) * p.Price
 	}
 
+	// Check if user exists and has role CUSTOMER
+	if err := initializers.DB.Where("id = ? AND role_id = (SELECT id FROM roles WHERE name = ?)", input.CustomerID, "CUSTOMER").First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid customer ID"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		return
+	}
+
 	// Create order
 	order := models.Order{
-		CustomerID:           input.CustomerID,
-		DeliveryAddressIndex: input.AddressID, // save delivery address
-		Total:                total,
-		Status:               "pending",
+		CustomerID:        input.CustomerID,
+		DeliveryAddressId: input.AddressID, // save delivery address
+		Total:             total,
+		Status:            "pending",
 	}
 
 	if err := initializers.DB.Create(&order).Error; err != nil {
@@ -62,11 +77,13 @@ func CreateOrder(c *gin.Context) {
 // Get All Orders
 func GetOrders(c *gin.Context) {
 	var orders []models.Order
-	initializers.DB.
+	if err := initializers.DB.
 		Preload("Customer").
-		Preload("Products").
-		Preload("Address"). // preload delivery address
-		Find(&orders)
+		Preload("OrderItems.Product"). // load order items + product
+		Find(&orders).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
 	c.JSON(http.StatusOK, orders)
 }
@@ -78,8 +95,7 @@ func GetOrderByID(c *gin.Context) {
 
 	if err := initializers.DB.
 		Preload("Customer").
-		Preload("Products").
-		Preload("Address"). // preload delivery address
+		Preload("OrderItems.Product"). // load order items + product
 		First(&order, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Order not found"})
 		return
@@ -110,7 +126,7 @@ func UpdateOrder(c *gin.Context) {
 
 	order.Status = input.Status
 	if input.AddressID != 0 {
-		order.DeliveryAddressIndex = input.AddressID
+		order.DeliveryAddressId = input.AddressID
 	}
 
 	initializers.DB.Save(&order)
