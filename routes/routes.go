@@ -35,16 +35,16 @@ func RegisterRoutes(r *gin.Engine) {
 		// User routes (protected)
 		users := api.Group("/users", middleware.AuthRequired())
 		{
-			users.GET("/", controllers.GetUsers)
-			users.GET("/:id", controllers.GetUserByID)
-			users.PUT("/:id", controllers.Update)
-			users.DELETE("/:id", controllers.Delete)
+			users.GET("/", middleware.AuthRequired(), middleware.RoleRequired("super admin", "admin"), controllers.GetUsers)
+			users.GET("/:id", middleware.AuthRequired(), middleware.RoleRequired("super admin", "admin"), controllers.GetUserByID)
+			users.PUT("/:id", middleware.AuthRequired(), middleware.RoleRequired("super admin", "admin"), controllers.Update)
+			users.DELETE("/:id", middleware.AuthRequired(), middleware.RoleRequired("super admin", "admin"), controllers.Delete)
 		}
 
 		// Customer Profile Routes
 		customerProfiles := api.Group("/customer-profiles")
 		{
-			customerProfiles.POST("/", controllers.CreateCustomerProfile)
+			customerProfiles.POST("/", middleware.AuthRequired(), middleware.RoleRequired("customer"), controllers.CreateCustomerProfile)
 			customerProfiles.GET("/", middleware.AuthRequired(), controllers.GetCustomerProfiles)
 			customerProfiles.GET("/:id", middleware.AuthRequired(), controllers.GetCustomerProfileByID)
 			customerProfiles.PUT("/:id", controllers.UpdateCustomerProfile)

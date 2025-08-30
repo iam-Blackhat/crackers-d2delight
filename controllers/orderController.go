@@ -34,10 +34,10 @@ func CreateOrder(c *gin.Context) {
 
 	// Create order
 	order := models.Order{
-		CustomerID:           input.CustomerID,
-		DeliveryAddressIndex: input.AddressID, // save delivery address
-		Total:                total,
-		Status:               "pending",
+		CustomerID:        input.CustomerID,
+		DeliveryAddressId: input.AddressID, // save delivery address
+		Total:             total,
+		Status:            "pending",
 	}
 
 	if err := initializers.DB.Create(&order).Error; err != nil {
@@ -110,7 +110,7 @@ func UpdateOrder(c *gin.Context) {
 
 	order.Status = input.Status
 	if input.AddressID != 0 {
-		order.DeliveryAddressIndex = input.AddressID
+		order.DeliveryAddressId = input.AddressID
 	}
 
 	initializers.DB.Save(&order)
