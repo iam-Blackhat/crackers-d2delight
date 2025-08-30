@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
 	"crackers/d2delight.com/initializers"
@@ -23,6 +24,11 @@ type registerInput struct {
 type loginInput struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
+}
+
+type Role struct {
+	ID   uuid.UUID `db:"id" json:"id"`
+	Name string    `db:"name" json:"name"`
 }
 
 // Register endpoint (creates user)
@@ -88,7 +94,13 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	token, err := utils.CreateToken(user.ID, user.Email, user.Name)
+	var role Role
+	if err := initializers.DB.First(&role, user.RoleID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch role"})
+		return
+	}
+
+	token, err := utils.CreateToken(user.ID, user.Email, user.Name, role.Name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create token"})
 		return
