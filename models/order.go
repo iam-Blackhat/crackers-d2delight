@@ -1,15 +1,20 @@
 package models
 
-type Order struct {
-	ID                uint    `gorm:"primaryKey" json:"id"`
-	CustomerID        uint    `json:"customer_id"`
-	DeliveryAddressId uint    `json:"delivery_address_id"`
-	Total             float64 `json:"total"`
-	Status            string  `json:"status"`
+import "time"
 
-	// Relationships
-	Customer   User        `gorm:"foreignKey:CustomerID" json:"customer"`
-	OrderItems []OrderItem `json:"order_items"`
+type Order struct {
+	ID                uint      `gorm:"primaryKey" json:"id"`
+	CustomerID        uint      `json:"customer_id"`
+	DeliveryAddressId uint      `json:"delivery_address_id"`
+	DeliveryAddress   string    `json:"delivery_address" gorm:"-"`
+	Total             float64   `json:"total"`
+	Status            string    `json:"status"`
+	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
+
+	// Relations
+	Customer        User            `gorm:"foreignKey:CustomerID;references:ID" json:"customer"`
+	CustomerProfile CustomerProfile `gorm:"foreignKey:UserID;references:CustomerID" json:"customer_profile"`
 }
 
 type OrderItem struct {

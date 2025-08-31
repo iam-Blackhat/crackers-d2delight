@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"crackers/d2delight.com/initializers"
@@ -13,6 +15,7 @@ import (
 )
 
 var user models.User
+var deliveryAddress string
 
 // Create Order
 func CreateOrder(c *gin.Context) {
@@ -71,6 +74,25 @@ func CreateOrder(c *gin.Context) {
 		initializers.DB.Create(&orderItem)
 	}
 
+	if err := initializers.DB.Preload("Customer").
+		Preload("CustomerProfile").
+		Find(&order).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var addresses []string
+	if err := json.Unmarshal(order.CustomerProfile.Addresses, &addresses); err != nil {
+		// handle error
+	}
+
+	// Pick the right address
+	if int(order.DeliveryAddressId) < len(addresses) {
+		deliveryAddress := addresses[int(order.DeliveryAddressId)]
+		order.DeliveryAddress = deliveryAddress
+	} else {
+		fmt.Println("Invalid address index")
+	}
 	c.JSON(http.StatusCreated, order)
 }
 

@@ -42,7 +42,7 @@ func RegisterRoutes(r *gin.Engine) {
 		}
 
 		// Customer Profile Routes
-		customerProfiles := api.Group("/CUSTOMER-profiles")
+		customerProfiles := api.Group("/customer-profiles")
 		{
 			customerProfiles.POST("/", middleware.AuthRequired(), middleware.RoleRequired("CUSTOMER"), controllers.CreateCustomerProfile)
 			customerProfiles.GET("/", middleware.AuthRequired(), middleware.RoleRequired("SUPER ADMIN", "ADMIN"), controllers.GetCustomerProfiles)
