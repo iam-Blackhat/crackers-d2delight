@@ -1,14 +1,19 @@
 package controllers
 
 import (
+	"encoding/json"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/datatypes"
 
 	"crackers/d2delight.com/initializers"
 	"crackers/d2delight.com/models"
+	"crackers/d2delight.com/utils"
 )
 
 // Input struct for creating/updating users
@@ -61,21 +66,110 @@ func Create(c *gin.Context) {
 		input.RoleID = customerRole.ID
 	}
 
+	// Generate OTP
+	otp := utils.GenerateNumericOTP(6)
+	otpHash := utils.HashOTP(otp)
+
+	meta := map[string]any{
+		"name":    input.Name,
+		"email":   input.Email,
+		"phone":   input.Phone,
+		"pw_hash": string(hashedPassword),
+		"role_id": input.RoleID.String(),
+	}
+	metaJSON, _ := json.Marshal(meta)
+
+	// Delete old OTPs
+	initializers.DB.Where("phone = ? AND purpose = ?", input.Phone, "register").
+		Delete(&models.PhoneOTP{})
+
+	otpRow := models.PhoneOTP{
+		Phone:       input.Phone,
+		Purpose:     "register",
+		CodeHash:    otpHash,
+		Meta:        datatypes.JSON(metaJSON),
+		Attempts:    0,
+		MaxAttempts: 5,
+		ExpiresAt:   time.Now().Add(5 * time.Minute),
+	}
+	initializers.DB.Create(&otpRow)
+
+	// Send SMS
+	_ = utils.SendSMS(input.Phone, "Your OTP is: "+otp)
+
+	c.JSON(http.StatusOK, gin.H{"message": "OTP sent"})
+
+}
+
+func VerifyRegisterOTP(c *gin.Context) {
+	var input struct {
+		Phone string `json:"phone" binding:"required"`
+		Code  string `json:"code" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var otpRow models.PhoneOTP
+	if err := initializers.DB.Where("phone = ? AND purpose = ?", input.Phone, "register").
+		First(&otpRow).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "OTP not found"})
+		return
+	}
+
+	if time.Now().After(otpRow.ExpiresAt) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "OTP expired"})
+		return
+	}
+
+	if otpRow.Attempts >= otpRow.MaxAttempts {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Too many attempts"})
+		return
+	}
+
+	if !utils.CheckOTP(input.Code, otpRow.CodeHash) {
+		initializers.DB.Model(&otpRow).Update("attempts", otpRow.Attempts+1)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid OTP"})
+		return
+	}
+
+	// Parse metadata
+	var meta map[string]any
+	json.Unmarshal(otpRow.Meta, &meta)
+
+	// Create user
 	user := models.User{
-		Name:     input.Name,
-		Email:    input.Email,
-		Phone:    input.Phone,
-		Password: string(hashedPassword),
-		RoleID:   input.RoleID,
+		Name:     meta["name"].(string),
+		Email:    meta["email"].(string),
+		Phone:    meta["phone"].(string),
+		Password: meta["pw_hash"].(string),
+		RoleID:   uuid.MustParse(meta["role_id"].(string)),
 	}
 
 	if err := initializers.DB.Create(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "User create failed"})
+		return
+	}
+	// Clean OTP row
+	initializers.DB.Delete(&otpRow)
+
+	var role Role
+	if err := initializers.DB.First(&role, user.RoleID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch role"})
+		return
+	}
+
+	token, err := utils.CreateToken(user.ID, user.Email, user.Name, role.Name)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create token"})
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "User registered successfully",
+		"access_token": token,
+		"token_type":   "bearer",
+		"expires_in":   os.Getenv("JWT_EXPIRES_MINUTES"),
 		"user": gin.H{
 			"id":     user.ID,
 			"name":   user.Name,
@@ -83,6 +177,7 @@ func Create(c *gin.Context) {
 			"phone":  user.Phone,
 			"roleId": user.RoleID,
 		},
+		"message": "User registered successfully",
 	})
 }
 

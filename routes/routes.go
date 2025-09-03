@@ -30,6 +30,7 @@ func RegisterRoutes(r *gin.Engine) {
 		{
 			auth.POST("/login", controllers.Login)
 			auth.POST("/register", controllers.Create)
+			auth.POST("/register/verify-otp", controllers.VerifyRegisterOTP)
 		}
 
 		// User routes (protected)
