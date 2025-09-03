@@ -101,15 +101,37 @@ func GetOrders(c *gin.Context) {
 	var orders []models.Order
 	if err := initializers.DB.
 		Preload("Customer").
-		Preload("OrderItems.Product"). // load order items + product
+		Preload("OrderItems.Product").
+		Preload("CustomerProfile").
 		Find(&orders).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	// Loop through orders and map delivery address
+	for i := range orders {
+		var addresses []string
+
+		// Unmarshal customer profile addresses JSON
+		if orders[i].CustomerProfile.Addresses != nil {
+			if err := json.Unmarshal(orders[i].CustomerProfile.Addresses, &addresses); err != nil {
+				fmt.Println("Error unmarshalling addresses:", err)
+				continue
+			}
+
+			// Pick the right address using DeliveryAddressId
+			if int(orders[i].DeliveryAddressId) < len(addresses) {
+				orders[i].DeliveryAddress = addresses[int(orders[i].DeliveryAddressId)]
+			} else {
+				fmt.Println("Invalid address index for order:", orders[i].ID)
+			}
+		}
+	}
+
 	c.JSON(http.StatusOK, orders)
 }
 
+// Get Order by ID
 // Get Order by ID
 func GetOrderByID(c *gin.Context) {
 	id := c.Param("id")
@@ -117,10 +139,24 @@ func GetOrderByID(c *gin.Context) {
 
 	if err := initializers.DB.
 		Preload("Customer").
-		Preload("OrderItems.Product"). // load order items + product
+		Preload("CustomerProfile"). // load profile for addresses JSON
+		Preload("OrderItems.Product").
 		First(&order, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Order not found"})
 		return
+	}
+	var addresses []string
+	// Parse addresses JSON
+	if len(order.CustomerProfile.Addresses) > 0 {
+		if err := json.Unmarshal(order.CustomerProfile.Addresses, &addresses); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse addresses"})
+			return
+		}
+
+		// Pick the delivery address using DeliveryAddressId
+		if int(order.DeliveryAddressId) < len(addresses) {
+			order.DeliveryAddress = addresses[int(order.DeliveryAddressId)]
+		}
 	}
 
 	c.JSON(http.StatusOK, order)

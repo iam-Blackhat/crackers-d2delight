@@ -3,18 +3,17 @@ package models
 import "time"
 
 type Order struct {
-	ID                uint      `gorm:"primaryKey" json:"id"`
-	CustomerID        uint      `json:"customer_id"`
-	DeliveryAddressId uint      `json:"delivery_address_id"`
-	DeliveryAddress   string    `json:"delivery_address" gorm:"-"`
-	Total             float64   `json:"total"`
-	Status            string    `json:"status"`
-	CreatedAt         time.Time `json:"created_at"`
-	UpdatedAt         time.Time `json:"updated_at"`
-
-	// Relations
-	Customer        User            `gorm:"foreignKey:CustomerID;references:ID" json:"customer"`
-	CustomerProfile CustomerProfile `gorm:"foreignKey:UserID;references:CustomerID" json:"customer_profile"`
+	ID                uint            `gorm:"primaryKey" json:"id"`
+	CustomerID        uint            `json:"customer_id"`
+	DeliveryAddressId uint            `json:"delivery_address_id"`
+	DeliveryAddress   string          `json:"delivery_address" gorm:"-"`
+	Total             float64         `json:"total"`
+	Status            string          `json:"status"`
+	CreatedAt         time.Time       `json:"created_at"`
+	UpdatedAt         time.Time       `json:"updated_at"`
+	OrderItems        []OrderItem     `gorm:"foreignKey:OrderID"`
+	Customer          User            `gorm:"foreignKey:CustomerID;references:ID" json:"customer"`
+	CustomerProfile   CustomerProfile `gorm:"foreignKey:UserID;references:CustomerID" json:"customer_profile"`
 }
 
 type OrderItem struct {
